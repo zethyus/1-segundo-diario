@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meu Diário 1s</title>
+    <style>
+        /* Reset e configurações básicas */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0;
+            height: 100vh; /* Garante que ocupa a altura total */
+            height: -webkit-fill-available; /* Correção para Safari iOS */
+            display: flex;
+            flex-direction: column;
+            background-color: #000; /* Fundo preto para foco no vídeo */
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Área do Vídeo */
+        #video-container {
+            flex: 1; /* Ocupa todo o espaço disponível acima dos controles */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        video {
+            /* Garante que o vídeo preencha a área mantendo a proporção, ideal para vertical */
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+        }
+
+        /* Área de Controles (Parte inferior) */
+        .controls-area {
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px 20px 40px 20px; /* Mais espaço embaixo para iOS */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+
+        /* Seletor de Duração */
+        .duration-selector {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        select {
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background: #333;
+            color: white;
+            font-size: 1rem;
+        }
+
+        /* Botão de Gravar (Estilo Shutter) */
+        #recordBtn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid white;
+            background-color: #ff3b30; /* Vermelho clássico */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0; /* Remove padding padrão */
+        }
+
+        /* Efeito ao clicar ou gravando */
+        #recordBtn:active, #recordBtn.recording {
+            transform: scale(0.9);
+            background-color: #ff6b63;
+        }
+        
+        /* Quadrado interno quando gravando (opcional, estilo iOS) */
+        #recordBtn.recording::after {
+            content: '';
+            display: block;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        /* Mensagens de Status */
+        #status {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #aaa;
+            height: 20px; /* Altura fixa para não pular o layout */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="video-container">
+        <video id="preview" autoplay muted playsinline></video>
+    </div>
+
+    <div class="controls-area">
+        <div class="duration-selector">
+            <label for="duration">Duração:</label>
+            <select id="duration">
+                <option value="1.0" selected>1.0s</option>
+                <option value="1.5">1.5s</option>
+                <option value="2.0">2.0s</option>
+                <option value="3.0">3.0s</option>
+            </select>
+        </div>
+
+        <button id="recordBtn" aria-label="Gravar vídeo"></button>
+        <p id="status">Toque para gravar</p>
+    </div>
+
+    <script>
+        const preview = document.getElementById('preview');
+        const recordBtn = document.getElementById('recordBtn');
+        const statusTxt = document.getElementById('status');
+        const durationSelect = document.getElementById('duration');
+
+        let stream;
+        let mediaRecorder;
+        let chunks = [];
+        let isRecording = false;
+
+        // Função para obter a data formatada DD-MM-AAAA
+        function getFormattedDate() {
+            const d = new Date();
+            // Adiciona um zero à esquerda se o dia/mês for menor que 10
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0'); // Meses começam em 0 no JS
+            const ano = d.getFullYear();
+            // Usamos traços porque barras '/' são proibidas em nomes de arquivo
+            return `${dia}-${mes}-${ano}`;
+        }
+
+        async function initCamera() {
+            try {
+                // Tenta pegar a câmera traseira e prefere orientação retrato, se disponível
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        aspectRatio: { ideal: 9/16 } // Tenta sugerir vertical
+                    },
+                    audio: true 
+                });
+                preview.srcObject = stream;
+                statusTxt.innerText = "Pronto.";
+            } catch (err) {
+                statusTxt.innerText = "Erro: " + err.message;
+                recordBtn.disabled = true;
+                recordBtn.style.backgroundColor = "#555";
+            }
+        }
+
+        recordBtn.addEventListener('click', () => {
+            if (isRecording || !stream) return; // Evita múltiplos cliques
+
+            isRecording = true;
+            chunks = [];
+            
+            // Pega a duração selecionada e converte para milissegundos
+            const durationSeconds = parseFloat(durationSelect.value);
+            const durationMS = durationSeconds * 1000;
+
+            // Tenta usar codecs modernos se disponíveis para melhor qualidade/tamanho
+            let options = { mimeType: 'video/webm;codecs=vp9' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                 options = { mimeType: 'video/mp4' }; // Fallback para MP4 padrão
+            }
+            
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            // UI Update - Começou a gravar
+            recordBtn.classList.add('recording');
+            statusTxt.innerText = `Gravando ${durationSeconds}s...`;
+            durationSelect.disabled = true;
+
+            
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+            
+            mediaRecorder.onstop = () => {
+                // Cria o arquivo final
+                const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                // Define o nome com a data formatada
+                const dateStr = getFormattedDate();
+                // Adiciona a extensão correta dependendo do tipo gravado
+                const ext = mediaRecorder.mimeType.includes('mp4') ? '.mp4' : '.webm';
+                a.href = url;
+                a.download = `${dateStr}${ext}`;
+                
+                // Dispara o download
+                document.body.appendChild(a); // Necessário para Firefox
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url); // Limpa memória
+                
+                // UI Update - Finalizou
+                recordBtn.classList.remove('recording');
+                statusTxt.innerText = "Vídeo salvo! Verifique seus downloads.";
+                durationSelect.disabled = false;
+                isRecording = false;
+            };
+
+            mediaRecorder.start();
+
+            // O Timer que para a gravação automaticamente
+            setTimeout(() => {
+                if (mediaRecorder.state === "recording") {
+                    mediaRecorder.stop();
+                }
+            }, durationMS); 
+        });
+
+        // Inicia assim que carrega a página
+        window.addEventListener('load', initCamera);
+    </script>
+</body>
+</html>
