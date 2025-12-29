@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Captura Rápida</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Captura Rápida Pro</title>
   <style>
     * {
       margin: 0;
@@ -20,25 +20,44 @@
     .container {
       position: relative;
       width: 100vw;
+      /* Fallback para navegadores antigos */
       height: 100vh;
+      /* Ajuste moderno para mobile (ignora barra de endereço) */
+      height: 100dvh;
       background: #000;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
+    /* Barra de Progresso Visual */
+    .progress-bar-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #ef4444;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    }
+
     #video {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: cover; /* Garante que preencha a tela toda */
     }
 
     .permission-screen {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0; /* Atalho para top/left/right/bottom: 0 */
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
       flex-direction: column;
@@ -49,9 +68,7 @@
       z-index: 100;
     }
 
-    .permission-screen.hidden {
-      display: none;
-    }
+    .permission-screen.hidden { display: none; }
 
     .camera-icon {
       width: 80px;
@@ -96,25 +113,12 @@
       font-size: 1.125rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .btn-primary:active {
-      transform: scale(0.98);
     }
 
     .loading-screen {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       background: #000;
       display: flex;
       flex-direction: column;
@@ -123,9 +127,7 @@
       z-index: 99;
     }
 
-    .loading-screen.hidden {
-      display: none;
-    }
+    .loading-screen.hidden { display: none; }
 
     .spinner {
       width: 50px;
@@ -137,18 +139,15 @@
       margin-bottom: 1rem;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .loading-text {
-      color: white;
-      font-size: 1.125rem;
-    }
+    .loading-text { color: white; font-size: 1.125rem; }
 
+    /* CONTROLES OTIMIZADOS PARA MOBILE */
     .controls {
       position: absolute;
-      bottom: 3rem;
+      /* O PULO DO GATO: Usa a maior margem entre 2rem ou a área segura + 20px */
+      bottom: max(2rem, calc(env(safe-area-inset-bottom) + 20px));
       left: 0;
       right: 0;
       display: flex;
@@ -156,139 +155,74 @@
       align-items: center;
       gap: 3rem;
       padding: 0 2rem;
+      z-index: 50;
     }
 
     .btn-switch {
-      width: 64px;
-      height: 64px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
       border: none;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       -webkit-tap-highlight-color: transparent;
     }
 
-    .btn-switch:hover {
-      background: white;
-      transform: scale(1.05);
-    }
-
-    .btn-switch:active {
-      transform: scale(0.95);
-    }
-
-    .btn-switch:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
     .btn-switch svg {
-      width: 28px;
-      height: 28px;
-      stroke: #374151;
+      width: 24px;
+      height: 24px;
+      stroke: white;
       fill: none;
       stroke-width: 2;
     }
 
     .btn-record {
-      width: 84px;
-      height: 84px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      background: white;
-      border: 5px solid #e5e7eb;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      background: transparent; /* Fundo transparente */
+      border: 5px solid white; /* Anel externo branco */
       position: relative;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .btn-record:hover {
-      border-color: #ef4444;
-      transform: scale(1.05);
-    }
-
-    .btn-record:active {
-      transform: scale(0.95);
-    }
-
-    .btn-record:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .btn-record.recording {
-      border-color: #ef4444;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    .btn-record.recording::before {
+    /* O botão vermelho interno */
+    .btn-record::after {
       content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 32px;
-      height: 32px;
-      background: #ef4444;
-      border-radius: 6px;
-    }
-
-    @keyframes pulse {
-      0%, 100% {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      }
-      50% {
-        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
-      }
-    }
-
-    .spacer {
       width: 64px;
       height: 64px;
+      background: #ef4444;
+      border-radius: 50%;
+      transition: all 0.3s;
     }
 
-    .timer {
-      position: absolute;
-      top: 6rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-      padding: 0.875rem 1.75rem;
-      border-radius: 28px;
-      font-size: 1.75rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-      display: none;
+    .btn-record:active { transform: scale(0.95); }
+
+    .btn-record.recording {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .btn-record.recording::after {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px; /* Vira um quadrado */
     }
 
-    .timer.visible {
-      display: block;
-    }
+    .spacer { width: 56px; height: 56px; }
 
-    .timer.warning {
-      background: rgba(239, 68, 68, 0.9);
-      animation: shake 0.5s ease-in-out;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(-50%) translateY(0); }
-      25% { transform: translateX(-50%) translateY(-5px); }
-      75% { transform: translateX(-50%) translateY(5px); }
-    }
-
+    /* Ajuste do seletor de duração para não colar no topo do iPhone */
     .duration-selector {
       position: absolute;
-      top: 2rem;
+      top: max(2rem, env(safe-area-inset-top));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -300,50 +234,31 @@
       backdrop-filter: blur(10px);
     }
 
-    .duration-selector.hidden {
-      display: none;
-    }
+    .duration-selector.hidden { display: none; }
 
     .duration-option {
-      width: 52px;
-      height: 52px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: transparent;
-      border: 2px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       color: white;
-      font-size: 1rem;
-      font-weight: 700;
+      font-size: 0.9rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .duration-option:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.6);
     }
 
     .duration-option.active {
       background: white;
-      color: #667eea;
+      color: #000;
       border-color: white;
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
     }
 
-    .duration-option:active {
-      transform: scale(0.95);
-    }
-
+    /* Tela de Preview */
     .preview-screen {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       background: #000;
       display: flex;
       flex-direction: column;
@@ -352,9 +267,7 @@
       z-index: 101;
     }
 
-    .preview-screen.hidden {
-      display: none;
-    }
+    .preview-screen.hidden { display: none; }
 
     #preview-video {
       max-width: 100%;
@@ -364,88 +277,60 @@
 
     .preview-actions {
       position: absolute;
-      bottom: 3rem;
+      bottom: max(2rem, calc(env(safe-area-inset-bottom) + 20px));
       left: 0;
       right: 0;
       display: flex;
       justify-content: center;
-      gap: 1.5rem;
-      padding: 0 2rem;
+      gap: 1rem;
+      padding: 0 1rem;
     }
 
     .btn-preview {
-      padding: 1.25rem 2.5rem;
+      padding: 1rem 2rem;
       border: none;
-      border-radius: 16px;
+      border-radius: 30px;
       font-size: 1.125rem;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      -webkit-tap-highlight-color: transparent;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .btn-preview svg {
-      width: 22px;
-      height: 22px;
-      stroke-width: 2.5;
-      fill: none;
-    }
-
-    .btn-discard {
-      background: #ef4444;
-      color: white;
-    }
-
-    .btn-discard:hover {
-      background: #dc2626;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
-    }
-
-    .btn-discard svg {
-      stroke: white;
-    }
-
-    .btn-save {
-      background: #22c55e;
-      color: white;
-    }
-
-    .btn-save:hover {
-      background: #16a34a;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
-    }
-
-    .btn-save svg {
-      stroke: white;
-    }
-
-    .btn-preview:active {
-      transform: scale(0.96);
-    }
+    .btn-discard { background: #333; color: white; }
+    .btn-save { background: white; color: black; }
 
     .error-message {
       color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
+      background: rgba(239, 68, 68, 0.15);
       padding: 0.75rem 1rem;
       border-radius: 8px;
       margin-top: 1rem;
       font-size: 0.875rem;
+      max-width: 90%;
     }
 
-    .hidden {
-      display: none !important;
+    .hidden { display: none !important; }
+
+    /* Media Query para telas muito baixas */
+    @media (max-height: 650px) {
+      .btn-record { width: 64px; height: 64px; }
+      .btn-record::after { width: 50px; height: 50px; }
+      .btn-switch { width: 44px; height: 44px; }
+      .spacer { width: 44px; height: 44px; }
+      .controls { gap: 1.5rem; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Tela de Permissão -->
+    
+    <div class="progress-bar-container">
+      <div id="progress-bar" class="progress-bar"></div>
+    </div>
+
     <div id="permission-screen" class="permission-screen">
       <div class="camera-icon">
         <svg viewBox="0 0 24 24">
@@ -454,21 +339,18 @@
         </svg>
       </div>
       <h1>Captura Rápida</h1>
-      <p>Para gravar vídeos curtos de até 5 segundos, precisamos acessar sua câmera e microfone.</p>
+      <p>Grave vídeos curtos instantaneamente.</p>
       <button class="btn-primary" onclick="requestCameraPermission()">Permitir Acesso</button>
       <div id="error-message" class="error-message hidden"></div>
     </div>
 
-    <!-- Tela de Carregamento -->
     <div id="loading-screen" class="loading-screen hidden">
       <div class="spinner"></div>
       <div class="loading-text">Iniciando câmera...</div>
     </div>
 
-    <!-- Vídeo da Câmera -->
     <video id="video" autoplay playsinline muted></video>
 
-    <!-- Seletor de Duração -->
     <div id="duration-selector" class="duration-selector hidden">
       <button class="duration-option" onclick="setDuration(1000)" data-value="1000">1s</button>
       <button class="duration-option" onclick="setDuration(2000)" data-value="2000">2s</button>
@@ -477,40 +359,21 @@
       <button class="duration-option active" onclick="setDuration(5000)" data-value="5000">5s</button>
     </div>
 
-    <!-- Timer -->
-    <div id="timer" class="timer">0.0s</div>
-
-    <!-- Controles da Câmera -->
     <div id="controls" class="controls hidden">
-      <button id="btn-switch" class="btn-switch" onclick="switchCamera()" aria-label="Alternar câmera">
+      <button id="btn-switch" class="btn-switch" onclick="switchCamera()">
         <svg viewBox="0 0 24 24">
-          <path d="M1 4v6h6M23 20v-6h-6"></path>
-          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+          <path d="M20 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"></path>
+          <path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
         </svg>
       </button>
-      <button id="btn-record" class="btn-record" onclick="toggleRecording()" aria-label="Gravar vídeo"></button>
-      <div class="spacer"></div>
-    </div>
+      <button id="btn-record" class="btn-record" onclick="toggleRecording()"></button>
+      <div class="spacer"></div> </div>
 
-    <!-- Tela de Prévia -->
     <div id="preview-screen" class="preview-screen hidden">
-      <video id="preview-video" controls></video>
+      <video id="preview-video" controls playsinline></video>
       <div class="preview-actions">
-        <button class="btn-preview btn-discard" onclick="discardVideo()">
-          <svg viewBox="0 0 24 24">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-          Descartar
-        </button>
-        <button class="btn-preview btn-save" onclick="saveVideo()">
-          <svg viewBox="0 0 24 24">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-            <polyline points="7 3 7 8 15 8"></polyline>
-          </svg>
-          Salvar
-        </button>
+        <button class="btn-preview btn-discard" onclick="discardVideo()">Descartar</button>
+        <button class="btn-preview btn-save" onclick="saveVideo()">Salvar</button>
       </div>
     </div>
   </div>
@@ -522,8 +385,9 @@
     let currentFacingMode = 'environment';
     let recordingTimer = null;
     let startTime = null;
-    let maxRecordingTime = 5000; // Duração padrão: 5 segundos
-
+    let maxRecordingTime = 5000;
+    
+    // Elementos
     const video = document.getElementById('video');
     const permissionScreen = document.getElementById('permission-screen');
     const loadingScreen = document.getElementById('loading-screen');
@@ -533,8 +397,8 @@
     const errorMessage = document.getElementById('error-message');
     const btnSwitch = document.getElementById('btn-switch');
     const btnRecord = document.getElementById('btn-record');
-    const timer = document.getElementById('timer');
     const durationSelector = document.getElementById('duration-selector');
+    const progressBar = document.getElementById('progress-bar');
 
     async function requestCameraPermission() {
       errorMessage.classList.add('hidden');
@@ -546,13 +410,10 @@
         loadingScreen.classList.add('hidden');
         controls.classList.remove('hidden');
         durationSelector.classList.remove('hidden');
-        btnSwitch.disabled = false;
-        btnRecord.disabled = false;
       } catch (error) {
         loadingScreen.classList.add('hidden');
         permissionScreen.classList.remove('hidden');
-        showError('Não foi possível acessar a câmera e microfone. Verifique as permissões do navegador.');
-        console.error('Erro ao acessar câmera:', error);
+        showError('Erro ao acessar câmera: ' + error.message);
       }
     }
 
@@ -561,6 +422,7 @@
         stream.getTracks().forEach(track => track.stop());
       }
 
+      // Tenta pegar a melhor resolução possível
       const constraints = {
         video: {
           facingMode: facingMode,
@@ -575,73 +437,63 @@
     }
 
     async function switchCamera() {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        return; // Não trocar câmera durante gravação
-      }
+      if (mediaRecorder && mediaRecorder.state === 'recording') return;
 
       btnSwitch.disabled = true;
-      btnRecord.disabled = true;
-
+      // Inverte a câmera
       currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-
+      
       try {
         await startCamera(currentFacingMode);
+      } catch (e) {
+        console.error(e);
+      } finally {
         btnSwitch.disabled = false;
-        btnRecord.disabled = false;
-      } catch (error) {
-        console.error('Erro ao trocar câmera:', error);
-        currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-        btnSwitch.disabled = false;
-        btnRecord.disabled = false;
       }
     }
 
     function toggleRecording() {
       if (!mediaRecorder || mediaRecorder.state === 'inactive') {
         startRecording();
-      } else if (mediaRecorder.state === 'recording') {
+      } else {
         stopRecording();
       }
     }
 
-    function setDuration(milliseconds) {
-      maxRecordingTime = milliseconds;
-      
-      // Atualizar botões ativos
-      document.querySelectorAll('.duration-option').forEach(btn => {
-        btn.classList.remove('active');
-        if (parseInt(btn.dataset.value) === milliseconds) {
-          btn.classList.add('active');
-        }
-      });
+    // Função INTELIGENTE para descobrir formato suportado (MP4/WebM)
+    function getSupportedMimeType() {
+      const types = [
+        'video/mp4', // Safari/iOS prefere este
+        'video/webm;codecs=vp9', // Chrome prefere este
+        'video/webm;codecs=vp8',
+        'video/webm'
+      ];
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) return type;
+      }
+      return '';
     }
 
     function startRecording() {
       recordedChunks = [];
-      
-      const options = {
-        mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 2500000
-      };
+      const mimeType = getSupportedMimeType();
+      const options = mimeType ? { mimeType } : {};
 
       try {
         mediaRecorder = new MediaRecorder(stream, options);
       } catch (e) {
-        // Fallback para formato mais compatível
-        mediaRecorder = new MediaRecorder(stream);
+        showError("Seu dispositivo não suporta gravação.");
+        return;
       }
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunks.push(event.data);
-        }
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const blob = new Blob(recordedChunks, { type: 'video/mp4' }); // Simplificado para compatibilidade
         const url = URL.createObjectURL(blob);
         previewVideo.src = url;
-        previewVideo.muted = false; // Habilita o áudio na prévia
         showPreview();
       };
 
@@ -649,16 +501,12 @@
       btnRecord.classList.add('recording');
       btnSwitch.disabled = true;
       durationSelector.classList.add('hidden');
-      timer.classList.add('visible');
       
       startTime = Date.now();
-      updateTimer();
+      updateProgress();
 
-      // Para automaticamente após a duração selecionada
       setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          stopRecording();
-        }
+        if (mediaRecorder.state === 'recording') stopRecording();
       }, maxRecordingTime);
     }
 
@@ -667,79 +515,64 @@
         mediaRecorder.stop();
         btnRecord.classList.remove('recording');
         btnSwitch.disabled = false;
-        btnRecord.disabled = false;
         durationSelector.classList.remove('hidden');
-        timer.classList.remove('visible', 'warning');
         clearInterval(recordingTimer);
+        progressBar.style.width = '0%';
       }
     }
 
-    function updateTimer() {
+    function updateProgress() {
       recordingTimer = setInterval(() => {
         const elapsed = Date.now() - startTime;
-        const seconds = (elapsed / 1000).toFixed(1);
-        timer.textContent = `${seconds}s`;
-        
-        // Avisar quando estiver próximo do limite (últimos 2 segundos)
-        const remaining = maxRecordingTime - elapsed;
-        if (remaining <= 2000 && !timer.classList.contains('warning')) {
-          timer.classList.add('warning');
-        }
-      }, 100);
+        const percent = Math.min((elapsed / maxRecordingTime) * 100, 100);
+        progressBar.style.width = `${percent}%`;
+      }, 16); // ~60fps
+    }
+
+    function setDuration(ms) {
+      maxRecordingTime = ms;
+      document.querySelectorAll('.duration-option').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.value) === ms);
+      });
     }
 
     function showPreview() {
       controls.classList.add('hidden');
-      durationSelector.classList.add('hidden');
-      timer.classList.remove('visible', 'warning');
       previewScreen.classList.remove('hidden');
-      previewVideo.play();
+      // Importante: tentar dar play automaticamente
+      previewVideo.play().catch(e => console.log("Auto-play bloqueado"));
     }
 
     function discardVideo() {
       recordedChunks = [];
+      previewVideo.pause();
       previewVideo.src = '';
       previewScreen.classList.add('hidden');
       controls.classList.remove('hidden');
       durationSelector.classList.remove('hidden');
+      progressBar.style.width = '0%';
     }
 
     function saveVideo() {
       if (recordedChunks.length === 0) return;
-
       const blob = new Blob(recordedChunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      link.download = `video-${timestamp}.webm`;
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
-
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `video_${Date.now()}.webm`;
+      a.click();
       discardVideo();
     }
 
-    function showError(message) {
-      errorMessage.textContent = message;
+    function showError(msg) {
+      errorMessage.textContent = msg;
       errorMessage.classList.remove('hidden');
     }
 
-    // Impedir zoom com pinch
-    document.addEventListener('touchmove', function(event) {
-      if (event.scale !== 1) {
-        event.preventDefault();
-      }
-    }, { passive: false });
-
-    // Impedir zoom com double tap
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(event) {
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-      }
-      lastTouchEnd = now;
-    }, false);
+    // Previne zoom no iOS
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    });
   </script>
 </body>
 </html>
