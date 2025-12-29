@@ -1,599 +1,513 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>1 Segundo Pro</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body {
-            background-color: #000;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh; 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Captura Rápida</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        #video-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      background: #000;
+    }
 
-        .ui-layer {
-            position: fixed;
-            z-index: 10;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding-bottom: 40px;
-            padding-bottom: max(40px, env(safe-area-inset-bottom));
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-        }
+    .container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        .top-bar {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 20;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            max-width: 200px;
-        }
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-        .icon-btn {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
+    .permission-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      z-index: 100;
+    }
 
-        .icon-btn:active {
-            background: rgba(0, 0, 0, 0.7);
-            border-color: rgba(255,255,255,0.5);
-        }
+    .permission-screen.hidden {
+      display: none;
+    }
 
-        .icon-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+    .camera-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
 
-        /* Indicador de permissões */
-        .permission-badge {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 20;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 8px 12px;
-            color: #ccc;
-            font-size: 0.75rem;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
+    .camera-icon svg {
+      width: 40px;
+      height: 40px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
 
-        .permission-badge.error {
-            color: #ff3b30;
-            border-color: #ff3b30;
-        }
+    h1 {
+      color: white;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
 
-        .permission-badge.success {
-            color: #34c759;
-            border-color: #34c759;
-        }
+    p {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.125rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      max-width: 400px;
+    }
 
-        #recordBtn {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            border: 4px solid white;
-            background-color: transparent;
-            position: relative;
-            margin-top: 20px;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
+    .btn-primary {
+      background: white;
+      color: #667eea;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-        #recordBtn:active {
-            transform: scale(0.95);
-        }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
 
-        #recordBtn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
 
-        #recordBtn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70px;
-            height: 70px;
-            background-color: #ff3b30;
-            border-radius: 50%;
-            transition: all 0.2s;
-        }
+    .loading-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99;
+    }
 
-        #recordBtn.recording::before {
-            width: 35px;
-            height: 35px;
-            border-radius: 6px;
-            animation: pulse 1s infinite;
-        }
+    .loading-screen.hidden {
+      display: none;
+    }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
 
-        .duration-pill {
-            background: rgba(50, 50, 50, 0.8);
-            border-radius: 25px;
-            padding: 8px 18px;
-            color: white;
-            font-size: 0.95rem;
-            border: 1px solid rgba(255,255,255,0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(10px);
-        }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-        select {
-            background: transparent;
-            color: white;
-            border: none;
-            font-weight: bold;
-            outline: none;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
+    .loading-text {
+      color: white;
+      font-size: 1.125rem;
+    }
 
-        select option {
-            background-color: #222;
-            color: white;
-        }
+    .controls {
+      position: absolute;
+      bottom: 2rem;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      padding: 0 1rem;
+    }
 
-        #status {
-            color: #ccc;
-            margin-top: 12px;
-            font-size: 0.85rem;
-            min-height: 18px;
-            text-align: center;
-            font-weight: 500;
-        }
+    .btn-switch {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
 
-        #status.recording {
-            color: #ff3b30;
-            animation: blink 1s infinite;
-        }
+    .btn-switch:hover {
+      background: white;
+    }
 
-        #status.success {
-            color: #34c759;
-        }
+    .btn-switch:active {
+      transform: scale(0.95);
+    }
 
-        #status.error {
-            color: #ff3b30;
-        }
+    .btn-switch:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-        @keyframes blink {
-            0%, 50%, 100% { opacity: 1; }
-            25%, 75% { opacity: 0.6; }
-        }
+    .btn-switch svg {
+      width: 24px;
+      height: 24px;
+      stroke: #374151;
+      fill: none;
+      stroke-width: 2;
+    }
 
-        /* Contador regressivo */
-        .timer {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 4rem;
-            font-weight: bold;
-            color: #ff3b30;
-            z-index: 15;
-            display: none;
-            text-shadow: 0 0 20px rgba(255, 59, 48, 0.5);
-        }
+    .btn-capture {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: white;
+      border: 4px solid #d1d5db;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
 
-        .timer.show {
-            display: block;
-        }
+    .btn-capture:hover {
+      border-color: #3b82f6;
+    }
 
-        /* Spinner de carregamento */
-        .spinner {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 25;
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+    .btn-capture:active {
+      transform: scale(0.95);
+    }
 
-        .spinner.show {
-            display: block;
-        }
+    .btn-capture:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-        @keyframes spin {
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
+    .spacer {
+      width: 56px;
+      height: 56px;
+    }
 
-        /* Tooltip */
-        .tooltip {
-            position: absolute;
-            background: rgba(0,0,0,0.9);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 30;
-            opacity: 0;
-            transition: opacity 0.3s;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            margin-bottom: 8px;
-        }
+    .preview-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 101;
+    }
 
-        .icon-btn:hover .tooltip {
-            opacity: 1;
-        }
-    </style>
+    .preview-screen.hidden {
+      display: none;
+    }
+
+    #preview-image {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .preview-actions {
+      position: absolute;
+      bottom: 2rem;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0 1rem;
+    }
+
+    .btn-preview {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-preview svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .btn-discard {
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+    }
+
+    .btn-discard:hover {
+      background: rgb(239, 68, 68);
+    }
+
+    .btn-discard svg {
+      stroke: white;
+    }
+
+    .btn-save {
+      background: rgba(34, 197, 94, 0.9);
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: rgb(34, 197, 94);
+    }
+
+    .btn-save svg {
+      stroke: white;
+    }
+
+    .btn-preview:active {
+      transform: scale(0.98);
+    }
+
+    .error-message {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
-
-    <video id="video-bg" autoplay muted playsinline></video>
-
-    <div class="permission-badge" id="permissionBadge">📹 Aguardando permissão</div>
-
-    <div class="top-bar">
-        <button class="icon-btn" id="rotateBtn" title="Girar Orientação">
-            🔄
-            <div class="tooltip">Vertical/Horizontal</div>
-        </button>
-        <button class="icon-btn" id="flipBtn" title="Trocar Câmera">
-            📷
-            <div class="tooltip">Câmera frontal/traseira</div>
-        </button>
-        <button class="icon-btn" id="settingsBtn" title="Configurações">
-            ⚙️
-            <div class="tooltip">Configurações</div>
-        </button>
+  <div class="container">
+    <!-- Tela de Permissão -->
+    <div id="permission-screen" class="permission-screen">
+      <div class="camera-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+      </div>
+      <h1>Captura Rápida</h1>
+      <p>Para tirar fotos, precisamos acessar sua câmera. Toque no botão abaixo para permitir o acesso.</p>
+      <button class="btn-primary" onclick="requestCameraPermission()">Permitir Acesso à Câmera</button>
+      <div id="error-message" class="error-message hidden"></div>
     </div>
 
-    <div class="spinner" id="spinner"></div>
-    <div class="timer" id="timer"></div>
-
-    <div class="ui-layer">
-        <div class="duration-pill">
-            <span>⏱️</span>
-            <select id="duration">
-                <option value="0.5">0.5s</option>
-                <option value="1.0" selected>1s</option>
-                <option value="1.5">1.5s</option>
-                <option value="2.0">2s</option>
-                <option value="3.0">3s</option>
-                <option value="5.0">5s</option>
-            </select>
-        </div>
-
-        <button id="recordBtn"></button>
-        <p id="status">Pronto para gravar</p>
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen" class="loading-screen hidden">
+      <div class="spinner"></div>
+      <div class="loading-text">Iniciando câmera...</div>
     </div>
 
-    <script>
-        const videoElement = document.getElementById('video-bg');
-        const recordBtn = document.getElementById('recordBtn');
-        const statusTxt = document.getElementById('status');
-        const durationSelect = document.getElementById('duration');
-        const rotateBtn = document.getElementById('rotateBtn');
-        const flipBtn = document.getElementById('flipBtn');
-        const permissionBadge = document.getElementById('permissionBadge');
-        const spinner = document.getElementById('spinner');
-        const timerEl = document.getElementById('timer');
+    <!-- Vídeo da Câmera -->
+    <video id="video" autoplay playsinline></video>
 
-        let stream;
-        let mediaRecorder;
-        let chunks = [];
-        let isRecording = false;
-        let isInitializing = false;
-        let canvas;
-        let canvasStream;
-        let frameId;
-        
-        let currentFacingMode = "environment";
-        let isPortrait = true;
+    <!-- Controles da Câmera -->
+    <div id="controls" class="controls hidden">
+      <button id="btn-switch" class="btn-switch" onclick="switchCamera()" aria-label="Alternar câmera">
+        <svg viewBox="0 0 24 24">
+          <path d="M1 4v6h6M23 20v-6h-6"></path>
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+        </svg>
+      </button>
+      <button id="btn-capture" class="btn-capture" onclick="capturePhoto()" aria-label="Capturar foto"></button>
+      <div class="spacer"></div>
+    </div>
 
-        function updateStatus(msg, type = 'normal') {
-            statusTxt.innerText = msg;
-            statusTxt.classList.remove('recording', 'success', 'error');
-            if (type !== 'normal') statusTxt.classList.add(type);
-        }
+    <!-- Tela de Prévia -->
+    <div id="preview-screen" class="preview-screen hidden">
+      <img id="preview-image" alt="Foto capturada">
+      <div class="preview-actions">
+        <button class="btn-preview btn-discard" onclick="discardPhoto()">
+          <svg viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Descartar
+        </button>
+        <button class="btn-preview btn-save" onclick="savePhoto()">
+          <svg viewBox="0 0 24 24">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Salvar
+        </button>
+      </div>
+    </div>
+  </div>
 
-        function setPermissionBadge(state, icon, msg) {
-            permissionBadge.innerText = icon + ' ' + msg;
-            permissionBadge.classList.remove('success', 'error');
-            if (state === 'success') permissionBadge.classList.add('success');
-            if (state === 'error') permissionBadge.classList.add('error');
-        }
+  <canvas id="canvas" style="display: none;"></canvas>
 
-        function showSpinner(show) {
-            spinner.classList.toggle('show', show);
-        }
+  <script>
+    let stream = null;
+    let currentFacingMode = 'environment';
+    let capturedImageData = null;
 
-        function getFormattedDate() {
-            const d = new Date();
-            const dia = String(d.getDate()).padStart(2, '0');
-            const mes = String(d.getMonth() + 1).padStart(2, '0');
-            const ano = d.getFullYear();
-            const horas = String(d.getHours()).padStart(2, '0');
-            const minutos = String(d.getMinutes()).padStart(2, '0');
-            const segundos = String(d.getSeconds()).padStart(2, '0');
-            return `${dia}-${mes}-${ano}_${horas}-${minutos}-${segundos}`;
-        }
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const permissionScreen = document.getElementById('permission-screen');
+    const loadingScreen = document.getElementById('loading-screen');
+    const controls = document.getElementById('controls');
+    const previewScreen = document.getElementById('preview-screen');
+    const previewImage = document.getElementById('preview-image');
+    const errorMessage = document.getElementById('error-message');
+    const btnSwitch = document.getElementById('btn-switch');
+    const btnCapture = document.getElementById('btn-capture');
 
-        async function startCamera() {
-            if (isInitializing) return;
-            isInitializing = true;
-            showSpinner(true);
+    async function requestCameraPermission() {
+      errorMessage.classList.add('hidden');
+      permissionScreen.classList.add('hidden');
+      loadingScreen.classList.remove('hidden');
 
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+      try {
+        await startCamera(currentFacingMode);
+        loadingScreen.classList.add('hidden');
+        controls.classList.remove('hidden');
+        btnSwitch.disabled = false;
+        btnCapture.disabled = false;
+      } catch (error) {
+        loadingScreen.classList.add('hidden');
+        permissionScreen.classList.remove('hidden');
+        showError('Não foi possível acessar a câmera. Verifique as permissões do navegador.');
+        console.error('Erro ao acessar câmera:', error);
+      }
+    }
 
-            const constraints = {
-                audio: { echoCancellation: true, noiseSuppression: true },
-                video: {
-                    facingMode: currentFacingMode,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
-            };
+    async function startCamera(facingMode) {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
 
-            try {
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoElement.srcObject = stream;
-                setPermissionBadge('success', '✓', 'Câmera ativa');
-                updateStatus(isPortrait ? "📱 Modo Vertical" : "📺 Modo Horizontal");
-                recordBtn.disabled = false;
-                flipBtn.disabled = false;
-                rotateBtn.disabled = false;
-            } catch (err) {
-                console.error('Erro ao acessar câmera:', err);
-                setPermissionBadge('error', '✗', 'Permissão negada');
-                updateStatus(`Erro: ${err.name === 'NotAllowedError' ? 'Permissão recusada' : err.message}`, 'error');
-                recordBtn.disabled = true;
-                flipBtn.disabled = true;
-            } finally {
-                showSpinner(false);
-                isInitializing = false;
-            }
-        }
+      const constraints = {
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      };
 
-        rotateBtn.addEventListener('click', () => {
-            if (isRecording || isInitializing) return;
-            isPortrait = !isPortrait;
-            updateStatus(isPortrait ? "📱 Modo Vertical" : "📺 Modo Horizontal");
-        });
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+    }
 
-        flipBtn.addEventListener('click', () => {
-            if (isRecording || isInitializing) return;
-            currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-            startCamera();
-        });
+    async function switchCamera() {
+      btnSwitch.disabled = true;
+      btnCapture.disabled = true;
 
-        function createCanvasStream(videoTrack, audioTrack) {
-            const settings = videoTrack.getSettings();
-            const videoWidth = settings.width || 1280;
-            const videoHeight = settings.height || 720;
+      currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
 
-            canvas = document.createElement('canvas');
-            if (isPortrait) {
-                canvas.width = 720;
-                canvas.height = 1280;
-            } else {
-                canvas.width = 1280;
-                canvas.height = 720;
-            }
+      try {
+        await startCamera(currentFacingMode);
+        btnSwitch.disabled = false;
+        btnCapture.disabled = false;
+      } catch (error) {
+        console.error('Erro ao trocar câmera:', error);
+        currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+        btnSwitch.disabled = false;
+        btnCapture.disabled = false;
+      }
+    }
 
-            const ctx = canvas.getContext('2d');
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const audioDestination = audioContext.createMediaStreamDestination();
-            
-            const audioSource = audioContext.createMediaStreamSource(new MediaStream([audioTrack]));
-            audioSource.connect(audioDestination);
+    function capturePhoto() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      
+      capturedImageData = canvas.toDataURL('image/jpeg', 0.95);
+      previewImage.src = capturedImageData;
+      
+      controls.classList.add('hidden');
+      previewScreen.classList.remove('hidden');
+    }
 
-            const canvasTracks = canvas.captureStream(30).getTracks();
-            const audioTracks = audioDestination.stream.getAudioTracks();
-            const combinedTracks = [...canvasTracks, ...audioTracks];
-            const combinedStream = new MediaStream(combinedTracks);
+    function discardPhoto() {
+      capturedImageData = null;
+      previewScreen.classList.add('hidden');
+      controls.classList.remove('hidden');
+    }
 
-            function drawFrame() {
-                if (videoTrack.readyState !== 'live') {
-                    cancelAnimationFrame(frameId);
-                    return;
-                }
+    function savePhoto() {
+      if (!capturedImageData) return;
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const link = document.createElement('a');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      link.download = `foto-${timestamp}.jpg`;
+      link.href = capturedImageData;
+      link.click();
 
-                if (isPortrait) {
-                    ctx.save();
-                    ctx.translate(canvas.width / 2, canvas.height / 2);
-                    ctx.rotate(Math.PI / 2);
-                    ctx.drawImage(videoElement, -videoHeight / 2, -videoWidth / 2, videoHeight, videoWidth);
-                    ctx.restore();
-                } else {
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                }
+      discardPhoto();
+    }
 
-                frameId = requestAnimationFrame(drawFrame);
-            }
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.remove('hidden');
+    }
 
-            frameId = requestAnimationFrame(drawFrame);
-            return combinedStream;
-        }
+    // Impedir zoom com pinch
+    document.addEventListener('touchmove', function(event) {
+      if (event.scale !== 1) {
+        event.preventDefault();
+      }
+    }, { passive: false });
 
-        let countdownInterval;
-
-        function startCountdown(duration) {
-            let remaining = Math.ceil(duration);
-            timerEl.classList.add('show');
-            timerEl.innerText = remaining;
-
-            countdownInterval = setInterval(() => {
-                remaining--;
-                if (remaining <= 0) {
-                    clearInterval(countdownInterval);
-                    timerEl.classList.remove('show');
-                } else {
-                    timerEl.innerText = remaining;
-                }
-            }, 1000);
-        }
-
-        recordBtn.addEventListener('click', () => {
-            if (isRecording || !stream) return;
-
-            isRecording = true;
-            chunks = [];
-            const duration = parseFloat(durationSelect.value);
-            const durationMS = duration * 1000;
-
-            const videoTrack = stream.getVideoTracks()[0];
-            const audioTrack = stream.getAudioTracks()[0];
-
-            if (!videoTrack || !audioTrack) {
-                updateStatus("Erro: sem vídeo ou áudio", 'error');
-                isRecording = false;
-                return;
-            }
-
-            canvasStream = createCanvasStream(videoTrack, audioTrack);
-
-            let mimeType = 'video/webm';
-            if (MediaRecorder.isTypeSupported('video/mp4')) {
-                mimeType = 'video/mp4';
-            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) {
-                mimeType = 'video/webm;codecs=h264';
-            }
-
-            try {
-                mediaRecorder = new MediaRecorder(canvasStream, { mimeType: mimeType, videoBitsPerSecond: 2500000 });
-            } catch (e) {
-                mediaRecorder = new MediaRecorder(canvasStream);
-            }
-
-            recordBtn.classList.add('recording');
-            recordBtn.disabled = true;
-            durationSelect.disabled = true;
-            flipBtn.disabled = true;
-            rotateBtn.disabled = true;
-            updateStatus("🔴 Gravando...", 'recording');
-            startCountdown(duration);
-            
-            mediaRecorder.ondataavailable = e => {
-                if (e.data.size > 0) chunks.push(e.data);
-            };
-            
-            mediaRecorder.onstop = () => {
-                clearInterval(countdownInterval);
-                timerEl.classList.remove('show');
-
-                const blob = new Blob(chunks, { type: mimeType });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                
-                const dateStr = getFormattedDate();
-                let ext = mimeType.includes('mp4') ? '.mp4' : '.webm';
-                
-                a.href = url;
-                a.download = `1s_${dateStr}${ext}`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                if (canvasStream) {
-                    canvasStream.getTracks().forEach(track => track.stop());
-                }
-                
-                recordBtn.classList.remove('recording');
-                recordBtn.disabled = false;
-                durationSelect.disabled = false;
-                flipBtn.disabled = false;
-                rotateBtn.disabled = false;
-                updateStatus("✓ Salvo! Pronto para gravar", 'success');
-                isRecording = false;
-
-                // Limpa mensagem após 2 segundos
-                setTimeout(() => {
-                    updateStatus(isPortrait ? "📱 Modo Vertical" : "📺 Modo Horizontal");
-                }, 2000);
-            };
-
-            mediaRecorder.start();
-
-            setTimeout(() => {
-                if (mediaRecorder.state === "recording") {
-                    mediaRecorder.stop();
-                }
-            }, durationMS); 
-        });
-
-        // Desabilita buttons inicialmente
-        recordBtn.disabled = true;
-        flipBtn.disabled = true;
-        rotateBtn.disabled = true;
-
-        window.addEventListener('load', startCamera);
-
-        // Trata mudanças de aba
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && isRecording) {
-                mediaRecorder.stop();
-            }
-        });
-
-        // Trata orientação do dispositivo
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                if (!isRecording) {
-                    startCamera();
-                }
-            }, 100);
-        });
-    </script>
+    // Impedir zoom com double tap
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+  </script>
 </body>
 </html>
