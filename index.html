@@ -7,32 +7,27 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>1 Segundo Pro</title>
     <style>
-        /* Reseta tudo para garantir tela cheia */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             background-color: #000;
-            overflow: hidden; /* Remove barras de rolagem */
+            overflow: hidden;
             width: 100vw;
             height: 100vh;
-            /* Suporte para altura dinâmica em mobile */
             height: 100dvh; 
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
-        /* Vídeo fixo no fundo ocupando tudo */
         #video-bg {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Cobre a tela sem distorcer */
+            object-fit: cover;
             z-index: 1;
-            transform: scaleX(1); /* Evita espelhamento errado */
         }
 
-        /* Interface flutuante sobre o vídeo */
         .ui-layer {
             position: fixed;
             z-index: 10;
@@ -45,9 +40,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-end;
         }
 
-        /* Barra de ferramentas superior */
         .top-bar {
             position: fixed;
             top: 20px;
@@ -55,33 +50,81 @@
             z-index: 20;
             display: flex;
             gap: 15px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            max-width: 200px;
         }
 
-        /* Botões utilitários (Rotação/Troca Câmera) */
         .icon-btn {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.3);
             color: white;
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             font-size: 1.2rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
         }
 
-        /* Botão de Gravar Principal */
+        .icon-btn:active {
+            background: rgba(0, 0, 0, 0.7);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .icon-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Indicador de permissões */
+        .permission-badge {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 8px 12px;
+            color: #ccc;
+            font-size: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .permission-badge.error {
+            color: #ff3b30;
+            border-color: #ff3b30;
+        }
+
+        .permission-badge.success {
+            color: #34c759;
+            border-color: #34c759;
+        }
+
         #recordBtn {
-            width: 85px;
-            height: 85px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
             border: 4px solid white;
             background-color: transparent;
             position: relative;
             margin-top: 20px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        #recordBtn:active {
+            transform: scale(0.95);
+        }
+
+        #recordBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         #recordBtn::before {
@@ -101,33 +144,132 @@
             width: 35px;
             height: 35px;
             border-radius: 6px;
+            animation: pulse 1s infinite;
         }
 
-        /* Seletor de tempo */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         .duration-pill {
-            background: rgba(50, 50, 50, 0.7);
-            border-radius: 20px;
-            padding: 5px 15px;
+            background: rgba(50, 50, 50, 0.8);
+            border-radius: 25px;
+            padding: 8px 18px;
             color: white;
-            font-size: 0.9rem;
-            border: 1px solid #555;
+            font-size: 0.95rem;
+            border: 1px solid rgba(255,255,255,0.3);
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            backdrop-filter: blur(10px);
         }
+
         select {
             background: transparent;
             color: white;
             border: none;
             font-weight: bold;
             outline: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        select option {
+            background-color: #222;
+            color: white;
         }
 
         #status {
             color: #ccc;
-            margin-top: 10px;
-            font-size: 0.8rem;
-            min-height: 15px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            min-height: 18px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        #status.recording {
+            color: #ff3b30;
+            animation: blink 1s infinite;
+        }
+
+        #status.success {
+            color: #34c759;
+        }
+
+        #status.error {
+            color: #ff3b30;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.6; }
+        }
+
+        /* Contador regressivo */
+        .timer {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ff3b30;
+            z-index: 15;
+            display: none;
+            text-shadow: 0 0 20px rgba(255, 59, 48, 0.5);
+        }
+
+        .timer.show {
+            display: block;
+        }
+
+        /* Spinner de carregamento */
+        .spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 25;
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 0.3s;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 8px;
+        }
+
+        .icon-btn:hover .tooltip {
+            opacity: 1;
         }
     </style>
 </head>
@@ -135,23 +277,41 @@
 
     <video id="video-bg" autoplay muted playsinline></video>
 
+    <div class="permission-badge" id="permissionBadge">📹 Aguardando permissão</div>
+
     <div class="top-bar">
-        <button class="icon-btn" id="rotateBtn" title="Girar Orientação">🔄</button>
-        <button class="icon-btn" id="flipBtn" title="Trocar Câmera">📷</button>
+        <button class="icon-btn" id="rotateBtn" title="Girar Orientação">
+            🔄
+            <div class="tooltip">Vertical/Horizontal</div>
+        </button>
+        <button class="icon-btn" id="flipBtn" title="Trocar Câmera">
+            📷
+            <div class="tooltip">Câmera frontal/traseira</div>
+        </button>
+        <button class="icon-btn" id="settingsBtn" title="Configurações">
+            ⚙️
+            <div class="tooltip">Configurações</div>
+        </button>
     </div>
+
+    <div class="spinner" id="spinner"></div>
+    <div class="timer" id="timer"></div>
 
     <div class="ui-layer">
         <div class="duration-pill">
             <span>⏱️</span>
             <select id="duration">
-                <option value="1.0">1s</option>
+                <option value="0.5">0.5s</option>
+                <option value="1.0" selected>1s</option>
                 <option value="1.5">1.5s</option>
                 <option value="2.0">2s</option>
+                <option value="3.0">3s</option>
+                <option value="5.0">5s</option>
             </select>
         </div>
 
         <button id="recordBtn"></button>
-        <p id="status">Pronto</p>
+        <p id="status">Pronto para gravar</p>
     </div>
 
     <script>
@@ -161,73 +321,188 @@
         const durationSelect = document.getElementById('duration');
         const rotateBtn = document.getElementById('rotateBtn');
         const flipBtn = document.getElementById('flipBtn');
+        const permissionBadge = document.getElementById('permissionBadge');
+        const spinner = document.getElementById('spinner');
+        const timerEl = document.getElementById('timer');
 
         let stream;
         let mediaRecorder;
         let chunks = [];
         let isRecording = false;
+        let isInitializing = false;
+        let canvas;
+        let canvasStream;
+        let frameId;
         
-        // Configurações iniciais
-        let currentFacingMode = "environment"; // Começa com a traseira
-        let isPortrait = true; // Começa tentando vertical
+        let currentFacingMode = "environment";
+        let isPortrait = true;
+
+        function updateStatus(msg, type = 'normal') {
+            statusTxt.innerText = msg;
+            statusTxt.classList.remove('recording', 'success', 'error');
+            if (type !== 'normal') statusTxt.classList.add(type);
+        }
+
+        function setPermissionBadge(state, icon, msg) {
+            permissionBadge.innerText = icon + ' ' + msg;
+            permissionBadge.classList.remove('success', 'error');
+            if (state === 'success') permissionBadge.classList.add('success');
+            if (state === 'error') permissionBadge.classList.add('error');
+        }
+
+        function showSpinner(show) {
+            spinner.classList.toggle('show', show);
+        }
 
         function getFormattedDate() {
             const d = new Date();
             const dia = String(d.getDate()).padStart(2, '0');
             const mes = String(d.getMonth() + 1).padStart(2, '0');
             const ano = d.getFullYear();
-            return `${dia}-${mes}-${ano}`;
+            const horas = String(d.getHours()).padStart(2, '0');
+            const minutos = String(d.getMinutes()).padStart(2, '0');
+            const segundos = String(d.getSeconds()).padStart(2, '0');
+            return `${dia}-${mes}-${ano}_${horas}-${minutos}-${segundos}`;
         }
 
         async function startCamera() {
-            // Para o stream anterior se existir
+            if (isInitializing) return;
+            isInitializing = true;
+            showSpinner(true);
+
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
 
-            // Define resolução baseada na orientação desejada
-            // Se isPortrait for true, pede Altura > Largura
-            const widthIdeal = isPortrait ? 720 : 1280;
-            const heightIdeal = isPortrait ? 1280 : 720;
-
             const constraints = {
-                audio: true,
+                audio: { echoCancellation: true, noiseSuppression: true },
                 video: {
                     facingMode: currentFacingMode,
-                    width: { ideal: widthIdeal },
-                    height: { ideal: heightIdeal }
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 }
             };
 
             try {
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = stream;
-                statusTxt.innerText = isPortrait ? "Modo Vertical" : "Modo Horizontal";
+                setPermissionBadge('success', '✓', 'Câmera ativa');
+                updateStatus(isPortrait ? "📱 Modo Vertical" : "📺 Modo Horizontal");
+                recordBtn.disabled = false;
+                flipBtn.disabled = false;
+                rotateBtn.disabled = false;
             } catch (err) {
-                statusTxt.innerText = "Erro: " + err.message;
+                console.error('Erro ao acessar câmera:', err);
+                setPermissionBadge('error', '✗', 'Permissão negada');
+                updateStatus(`Erro: ${err.name === 'NotAllowedError' ? 'Permissão recusada' : err.message}`, 'error');
+                recordBtn.disabled = true;
+                flipBtn.disabled = true;
+            } finally {
+                showSpinner(false);
+                isInitializing = false;
             }
         }
 
-        // Botão para trocar orientação (Vertical <-> Horizontal)
         rotateBtn.addEventListener('click', () => {
-            isPortrait = !isPortrait; // Inverte o valor
-            startCamera(); // Reinicia a câmera com novas medidas
+            if (isRecording || isInitializing) return;
+            isPortrait = !isPortrait;
+            updateStatus(isPortrait ? "📱 Modo Vertical" : "📺 Modo Horizontal");
         });
 
-        // Botão para trocar câmera (Traseira <-> Frontal)
         flipBtn.addEventListener('click', () => {
+            if (isRecording || isInitializing) return;
             currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
             startCamera();
         });
+
+        function createCanvasStream(videoTrack, audioTrack) {
+            const settings = videoTrack.getSettings();
+            const videoWidth = settings.width || 1280;
+            const videoHeight = settings.height || 720;
+
+            canvas = document.createElement('canvas');
+            if (isPortrait) {
+                canvas.width = 720;
+                canvas.height = 1280;
+            } else {
+                canvas.width = 1280;
+                canvas.height = 720;
+            }
+
+            const ctx = canvas.getContext('2d');
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioDestination = audioContext.createMediaStreamDestination();
+            
+            const audioSource = audioContext.createMediaStreamSource(new MediaStream([audioTrack]));
+            audioSource.connect(audioDestination);
+
+            const canvasTracks = canvas.captureStream(30).getTracks();
+            const audioTracks = audioDestination.stream.getAudioTracks();
+            const combinedTracks = [...canvasTracks, ...audioTracks];
+            const combinedStream = new MediaStream(combinedTracks);
+
+            function drawFrame() {
+                if (videoTrack.readyState !== 'live') {
+                    cancelAnimationFrame(frameId);
+                    return;
+                }
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (isPortrait) {
+                    ctx.save();
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.drawImage(videoElement, -videoHeight / 2, -videoWidth / 2, videoHeight, videoWidth);
+                    ctx.restore();
+                } else {
+                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                }
+
+                frameId = requestAnimationFrame(drawFrame);
+            }
+
+            frameId = requestAnimationFrame(drawFrame);
+            return combinedStream;
+        }
+
+        let countdownInterval;
+
+        function startCountdown(duration) {
+            let remaining = Math.ceil(duration);
+            timerEl.classList.add('show');
+            timerEl.innerText = remaining;
+
+            countdownInterval = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    timerEl.classList.remove('show');
+                } else {
+                    timerEl.innerText = remaining;
+                }
+            }, 1000);
+        }
 
         recordBtn.addEventListener('click', () => {
             if (isRecording || !stream) return;
 
             isRecording = true;
             chunks = [];
-            const durationMS = parseFloat(durationSelect.value) * 1000;
+            const duration = parseFloat(durationSelect.value);
+            const durationMS = duration * 1000;
 
-            // Tenta MP4 primeiro
+            const videoTrack = stream.getVideoTracks()[0];
+            const audioTrack = stream.getAudioTracks()[0];
+
+            if (!videoTrack || !audioTrack) {
+                updateStatus("Erro: sem vídeo ou áudio", 'error');
+                isRecording = false;
+                return;
+            }
+
+            canvasStream = createCanvasStream(videoTrack, audioTrack);
+
             let mimeType = 'video/webm';
             if (MediaRecorder.isTypeSupported('video/mp4')) {
                 mimeType = 'video/mp4';
@@ -236,19 +511,27 @@
             }
 
             try {
-                mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+                mediaRecorder = new MediaRecorder(canvasStream, { mimeType: mimeType, videoBitsPerSecond: 2500000 });
             } catch (e) {
-                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder = new MediaRecorder(canvasStream);
             }
 
             recordBtn.classList.add('recording');
-            statusTxt.innerText = "Gravando...";
+            recordBtn.disabled = true;
+            durationSelect.disabled = true;
+            flipBtn.disabled = true;
+            rotateBtn.disabled = true;
+            updateStatus("🔴 Gravando...", 'recording');
+            startCountdown(duration);
             
             mediaRecorder.ondataavailable = e => {
                 if (e.data.size > 0) chunks.push(e.data);
             };
             
             mediaRecorder.onstop = () => {
+                clearInterval(countdownInterval);
+                timerEl.classList.remove('show');
+
                 const blob = new Blob(chunks, { type: mimeType });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -257,14 +540,27 @@
                 let ext = mimeType.includes('mp4') ? '.mp4' : '.webm';
                 
                 a.href = url;
-                a.download = `${dateStr}${ext}`;
+                a.download = `1s_${dateStr}${ext}`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 
+                if (canvasStream) {
+                    canvasStream.getTracks().forEach(track => track.stop());
+                }
+                
                 recordBtn.classList.remove('recording');
-                statusTxt.innerText = "Salvo!";
+                recordBtn.disabled = false;
+                durationSelect.disabled = false;
+                flipBtn.disabled = false;
+                rotateBtn.disabled = false;
+                updateStatus("✓ Salvo! Pronto para gravar", 'success');
                 isRecording = false;
+
+                // Limpa mensagem após 2 segundos
+                setTimeout(() => {
+                    updateStatus(isPortrait ? "📱 Modo Vertical" : "📺 Modo Horizontal");
+                }, 2000);
             };
 
             mediaRecorder.start();
@@ -276,8 +572,28 @@
             }, durationMS); 
         });
 
-        // Inicia a câmera ao carregar
+        // Desabilita buttons inicialmente
+        recordBtn.disabled = true;
+        flipBtn.disabled = true;
+        rotateBtn.disabled = true;
+
         window.addEventListener('load', startCamera);
+
+        // Trata mudanças de aba
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isRecording) {
+                mediaRecorder.stop();
+            }
+        });
+
+        // Trata orientação do dispositivo
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (!isRecording) {
+                    startCamera();
+                }
+            }, 100);
+        });
     </script>
 </body>
 </html>
