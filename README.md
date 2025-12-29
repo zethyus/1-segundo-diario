@@ -1,7 +1,7 @@
 🎥 Captura Rápida Pro
 Um gravador de vídeos curtos para web, focado em simplicidade e velocidade. Ideal para quem precisa registrar algo rápido sem abrir apps pesados.
 
-[!IMPORTANT] Aviso de Projeto: Este projeto foi desenvolvido por um entusiasta amador e criado 100% com o auxílio de Inteligência Artificial (Gemini). O foco aqui foi a experimentação e a resolução de um problema pessoal usando as ferramentas mais modernas de geração de código.
+[!IMPORTANT] Aviso de Projeto: Este projeto foi desenvolvido por um entusiasta amador e criado 100% com o auxílio de Inteligência Artificial (Gemini e Claude). O foco aqui foi a experimentação e a resolução de um problema pessoal usando as ferramentas mais modernas de geração de código.
 
 ✨ Funcionalidades
 Duração Personalizada: Escolha gravar entre 1 a 5 segundos.
